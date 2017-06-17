@@ -26,6 +26,9 @@ extern "C" uint16_t keymap[];
 // is the keyboard signaling a key release to us?
 uint8_t release;
 
+// current modifiers held
+uint16_t modifiers;
+
 void setup()
 {
 	pinMode(AT_CLOCK, INPUT_PULLUP);
@@ -58,6 +61,10 @@ uint16_t at_read()
 			rc |= 1 << 9;
 	}
 
+	// wait for the clock line to go to end the stop bit
+	while(digitalRead(AT_CLOCK) == 0)
+		;
+
 	return rc;
 }
 
@@ -68,16 +75,12 @@ void loop()
 		return;
 
 	// read some bits
-	uint16_t bits = at_read();
-
-
-	const uint16_t scancode = bits & 0xFF;
-	Serial.print(scancode | 0x1000, HEX);
-	Serial.print(' ');
+	const uint16_t bits = at_read();
+	const uint8_t scancode = bits & 0xFF;
 
 	// check the parity
 	uint8_t count = 1;
-	uint16_t p = scancode;
+	uint8_t p = scancode;
 	for(int i = 0 ; i < 8 ; i++)
 	{
 		if (p & 1)
@@ -88,17 +91,29 @@ void loop()
 	const uint8_t parity = bits & 0x100 ? 1 : 0;
 	if ((count & 1) != parity)
 	{
+		Serial.print(scancode | 0x1000, HEX);
+		Serial.print(' ');
 		Serial.print(count & 1 ? '1' : '0');
 		Serial.print('!'); // not ok
 		Serial.print(parity);
-		Serial.println();
+
+		// should always be 1
+		Serial.print(' ');
+		Serial.println(bits & 0x200 ? '1' : '0');
 
 		// should signal some sort of error
+		release = 0;
+		modifiers = 0;
+		Keyboard.set_key1(0);
+		Keyboard.set_key2(0);
+		Keyboard.set_key3(0);
+		Keyboard.set_key4(0);
+		Keyboard.set_key5(0);
+		Keyboard.set_key6(0);
+		Keyboard.set_modifier(0);
+		Keyboard.send_now();
 		return;
 	}
-
-	// should always be 1
-	Serial.println(bits & 0x200 ? '1' : '0');
 
 	// hopefully we have good data now
 	if (scancode >= 0xF0)
@@ -112,7 +127,8 @@ void loop()
 	if (keycode == 0)
 	{
 		// unknown key?
-		Serial.println("????");
+		Serial.print(scancode | 0x1000);
+		Serial.println("???");
 		release = 0;
 		return;
 	}
@@ -121,11 +137,32 @@ void loop()
 	if (keycode & 0x8000)
 	{
 		// ignore it for now
-		Serial.print(" mod ");
-		Serial.println(keycode, HEX);
+		//Serial.print(" mod ");
+		//Serial.print(keycode, HEX);
+
+		if (release)
+			modifiers &= ~keycode;
+		else
+			modifiers |= keycode;
+
+		// fixup the high bit in the modifiers
+		// if no modifiers are held, set it to zero
+		if ((modifiers & 0x7FFF) == 0)
+			modifiers = 0;
+		else
+			modifiers |= 0x8000;
+
+		// send all of our currently held modifiers
+		Keyboard.set_modifier(modifiers);
+		Keyboard.send_now();
+
+		//Serial.print(' ');
+		//Serial.println(modifiers, HEX);
+
 		release = 0;
 		return;
 	}
+
 
 	if (release)
 		Keyboard.release(keycode);
