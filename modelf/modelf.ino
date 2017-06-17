@@ -7,7 +7,8 @@
  * The clock and data lines are open-collector, multi-master, so we activate
  * pullups and watch for it to pull the clock line low.
  *
- * We can also send commands to query version and configure the LEDs.
+ * We can also send commands to query version and configure the LEDs
+ * (although this is not currentl supported).
  *
  * Command protocol description:
  * http://retired.beyondlogic.org/keyboard/keybrd.htm
