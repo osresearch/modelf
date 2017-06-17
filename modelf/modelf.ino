@@ -21,6 +21,11 @@
 #define AT_CLOCK	5
 #define AT_DATA		6
 
+extern "C" uint16_t keymap[];
+
+// is the keyboard signaling a key release to us?
+uint8_t release;
+
 void setup()
 {
 	pinMode(AT_CLOCK, INPUT_PULLUP);
@@ -66,12 +71,13 @@ void loop()
 	uint16_t bits = at_read();
 
 
-	uint16_t p = (bits & 0xFF) | 0x1000;
-	Serial.print(p, HEX);
+	const uint16_t scancode = bits & 0xFF;
+	Serial.print(scancode | 0x1000, HEX);
 	Serial.print(' ');
 
 	// check the parity
 	uint8_t count = 1;
+	uint16_t p = scancode;
 	for(int i = 0 ; i < 8 ; i++)
 	{
 		if (p & 1)
@@ -85,10 +91,47 @@ void loop()
 		Serial.print(count & 1 ? '1' : '0');
 		Serial.print('!'); // not ok
 		Serial.print(parity);
-		Serial.print(' ');
+		Serial.println();
+
+		// should signal some sort of error
+		return;
 	}
 
 	// should always be 1
 	Serial.println(bits & 0x200 ? '1' : '0');
+
+	// hopefully we have good data now
+	if (scancode >= 0xF0)
+	{
+		// next key will be a release message
+		release = 1;
+		return;
+	}
+
+	const uint16_t keycode = keymap[scancode];
+	if (keycode == 0)
+	{
+		// unknown key?
+		Serial.println("????");
+		release = 0;
+		return;
+	}
+
+	// check to see if this is a modifier
+	if (keycode & 0x8000)
+	{
+		// ignore it for now
+		Serial.print(" mod ");
+		Serial.println(keycode, HEX);
+		release = 0;
+		return;
+	}
+
+	if (release)
+		Keyboard.release(keycode);
+	else
+		Keyboard.press(keycode);
+
+	release = 0;
 }
  
