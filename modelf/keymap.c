@@ -3,7 +3,7 @@
  */
 #include "keylayouts.h"
 
-uint16_t keymap[0xF0] = {
+uint16_t keymap[0xFF] = {
 	// top row
 	[0x0e] = '`',
 	[0x16] = '1',
@@ -74,6 +74,8 @@ uint16_t keymap[0xF0] = {
 	[0x76] = KEY_ESC,
 	[0x77] = KEY_NUM_LOCK,
 	[0x7e] = KEY_SCROLL_LOCK,
+#if 0
+	// normal keypad
 	[0x6c] = KEYPAD_7,
 	[0x75] = KEYPAD_8,
 	[0x7d] = KEYPAD_9,
@@ -86,6 +88,21 @@ uint16_t keymap[0xF0] = {
 	[0x70] = KEYPAD_0,
 	[0x71] = KEYPAD_PERIOD,
 	[0x7c] = KEYPAD_ASTERIX,
+#else
+	// always arrow keys
+	[0x6c] = KEY_HOME,
+	[0x75] = KEY_UP,
+	[0x7d] = KEY_PAGE_UP,
+	[0x6b] = KEY_LEFT,
+	[0x73] = KEYPAD_ENTER,
+	[0x74] = KEY_RIGHT,
+	[0x69] = KEY_END,
+	[0x72] = KEY_DOWN,
+	[0x7a] = KEY_PAGE_DOWN,
+	[0x70] = KEY_INSERT,
+	[0x71] = KEY_DELETE,
+	[0x7c] = KEY_PRINTSCREEN,
+#endif
 	[0x7b] = KEYPAD_MINUS,
 	[0x79] = KEYPAD_PLUS,
 
