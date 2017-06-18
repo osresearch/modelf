@@ -53,7 +53,8 @@ the stop bit, then reads the remaining ten bits in the frame.  It checks
 the parity and has a lookup table of IBM scancodes to USB keycodes that
 it uses to generate the HID messages.
 
-We could generate commands to the keyboard as well to query its version,
-enable the LEDs, etc.  That is left as a future project; sometimes the
+We can also generate commands to the keyboard to query its version,
+enable the LEDs, etc.  There appears to be some sort of problem with
+the way that we're dealing with the bus, but it mostly works.
+Sometimes toggling caps-lock/num-lock at a high rate causes problems.
 teensy won't program, so once the case is closed up it is hard to iterate
-on future developments.
