@@ -3,7 +3,7 @@
  */
 #include "keylayouts.h"
 
-uint16_t keymap[0xFF] = {
+uint16_t keymap[0xA0] = {
 	// top row
 	[0x0e] = '`',
 	[0x16] = '1',

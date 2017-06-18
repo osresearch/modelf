@@ -26,6 +26,7 @@
 extern "C" uint16_t keymap[];
 
 extern volatile uint8_t keyboard_leds;
+static uint8_t last_keyboard_leds;
 
 // is the keyboard signaling a key release to us?
 uint8_t release;
@@ -42,6 +43,9 @@ void setup()
 	Keyboard.begin();
 
 	delay(400);
+
+	// reset the keyboard
+	at_send(0xFF);
 }
 
 
@@ -311,7 +315,6 @@ void at_set_leds(uint8_t leds)
 void loop()
 {
 	// check for a change in the LED status
-	static uint8_t last_keyboard_leds;
 	static uint8_t scroll_lock;
 	if (keyboard_leds != last_keyboard_leds)
 	{
@@ -360,6 +363,8 @@ void loop()
 		// should signal some sort of error
 		release = 0;
 		modifiers = 0;
+		last_keyboard_leds = 0;
+
 		Keyboard.set_key1(0);
 		Keyboard.set_key2(0);
 		Keyboard.set_key3(0);
@@ -368,14 +373,23 @@ void loop()
 		Keyboard.set_key6(0);
 		Keyboard.set_modifier(0);
 		Keyboard.send_now();
+
+		// reset the keyboard controller if we can
+		at_send(0xFF);
 		return;
 	}
 
 	// hopefully we have good data now
-	if (scancode >= 0xF0)
+	if (scancode == 0xF0)
 	{
 		// next key will be a release message
 		release = 1;
+		return;
+	}
+	if (scancode >= 0xA0)
+	{
+		Serial.print(scancode, HEX);
+		Serial.println(" message");
 		return;
 	}
 
